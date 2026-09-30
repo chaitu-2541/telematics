@@ -53,6 +53,19 @@ def create_tables():
       home_depot STRING, region STRING, driver STRING,
       source_file STRING, ingested_at TIMESTAMP
     ) USING DELTA""")
+    # Migration 002: apply only through a bundle run. The schema check makes
+    # the ADD safe after a partial failure or a repeated deploy.
+    columns = {field.name.lower() for field in spark.table(gold).schema.fields}
+    if "inside_chicago_geofence" not in columns:
+        spark.sql(
+            f"ALTER TABLE {gold} ADD COLUMNS (inside_chicago_geofence BOOLEAN)"
+        )
+    # This remains safe to repeat if an earlier run stopped after ALTER.
+    spark.sql(f"""UPDATE {gold}
+       SET inside_chicago_geofence =
+           latitude BETWEEN 41.7 AND 42.0
+           AND longitude BETWEEN -87.9 AND -87.4
+       WHERE inside_chicago_geofence IS NULL""")
 
 
 def seed_trucks():
@@ -176,6 +189,11 @@ def load_gold():
         .select("ping_id", "truck_id", "latitude", "longitude", "event_ts",
                 "make", "model", "capacity_lbs", "home_depot", "region",
                 "driver", "source_file", "ingested_at")
+        .withColumn(
+            "inside_chicago_geofence",
+            F.col("latitude").between(41.7, 42.0) &
+            F.col("longitude").between(-87.9, -87.4)
+        )
     )
 
     def merge_batch(batch, batch_id):
@@ -203,15 +221,20 @@ def verify():
         ~F.col("longitude").between(-180.0, 180.0)
     ).count()
     missing_detail = spark.table(gold).filter(F.col("driver").isNull()).count()
+    missing_flag = spark.table(gold).filter(
+        F.col("inside_chicago_geofence").isNull()
+    ).count()
     print(f"Bronze={bronze_count}, Silver={silver_count}, Gold={gold_count}")
     print(f"Silver duplicates={duplicate_count}, bad coords={bad_coords}, "
-          f"unenriched Gold rows={missing_detail}")
+          f"unenriched Gold rows={missing_detail}, "
+          f"missing geofence flags={missing_flag}")
     assert bronze_count > silver_count > 0
     assert silver_count == gold_count
-    assert duplicate_count == bad_coords == missing_detail == 0
+    assert duplicate_count == bad_coords == missing_detail == missing_flag == 0
     display(spark.sql(
         f"SELECT truck_id, event_ts, latitude, longitude, driver, "
-        f"home_depot, region FROM {gold} ORDER BY event_ts DESC LIMIT 10"
+        f"home_depot, region, inside_chicago_geofence "
+        f"FROM {gold} ORDER BY event_ts DESC LIMIT 10"
     ))
 
 
