@@ -1,0 +1,29 @@
+resources:
+  schemas:
+    target_schema:
+      name: ${var.schema_name}
+      catalog_name: ${var.catalog}
+
+  volumes:
+    landing_volume:
+      name: ${var.volume_name}
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.target_schema.name}
+      volume_type: MANAGED
+
+  jobs:
+    telematics_job:
+      name: ${bundle.target}-telematics
+      max_concurrent_runs: 1
+      schedule:
+        quartz_cron_expression: ${var.cron}
+        timezone_id: UTC
+        pause_status: ${var.pause_status}
+      tasks:
+        - task_key: run_pipeline
+          notebook_task:
+            notebook_path: ../src/telematics.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema_name: ${resources.schemas.target_schema.name}
+              volume_name: ${resources.volumes.landing_volume.name}

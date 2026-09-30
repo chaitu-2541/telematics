@@ -1,0 +1,39 @@
+bundle:
+  name: telematics_takehome
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: An existing catalog in which you can create schemas
+    default: main
+  schema_name:
+    description: Target schema
+  volume_name:
+    description: Target landing volume
+  cron:
+    description: Quartz schedule for the target
+  pause_status:
+    description: PAUSED or UNPAUSED
+
+targets:
+  dev:
+    default: true
+    variables:
+      schema_name: telematics_dev
+      volume_name: landing_dev
+      cron: "0 0 0 * * ?"
+      pause_status: PAUSED
+  test:
+    variables:
+      schema_name: telematics_test
+      volume_name: landing_test
+      cron: "0 0 * * * ?"
+      pause_status: UNPAUSED
+  prod:
+    variables:
+      schema_name: telematics_prod
+      volume_name: landing_prod
+      cron: "0 0/15 * * * ?"
+      pause_status: UNPAUSED
