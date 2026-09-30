@@ -15,26 +15,35 @@ The single scheduled job avoids keeping a stream alive between batches.
        databricks current-user me --profile free
 
    A personal access token is also possible. Never put it in this repository.
-3. Select that profile for the following commands:
+3. Select that profile for the following commands. In Windows Command Prompt,
+   the terminal shown in your screenshot, use:
 
-       export DATABRICKS_CONFIG_PROFILE=free
+       set DATABRICKS_CONFIG_PROFILE=free
 
    In PowerShell, use:
 
        $env:DATABRICKS_CONFIG_PROFILE = "free"
+
+   In macOS or Linux, use:
+
+       export DATABRICKS_CONFIG_PROFILE=free
 
 4. Check which catalog allows you to create schemas:
 
        databricks catalogs list
 
    If main is not writable, set the same override for every target before
-   running any bundle command:
+   running any bundle command. In Windows Command Prompt:
 
-       export BUNDLE_VAR_catalog=YOUR_WRITABLE_CATALOG
+       set BUNDLE_VAR_catalog=YOUR_WRITABLE_CATALOG
 
    In PowerShell:
 
        $env:BUNDLE_VAR_catalog = "YOUR_WRITABLE_CATALOG"
+
+   In macOS or Linux:
+
+       export BUNDLE_VAR_catalog=YOUR_WRITABLE_CATALOG
 
    The catalog itself is an existing workspace prerequisite; schemas,
    volumes, jobs, and tables are bundle managed.
