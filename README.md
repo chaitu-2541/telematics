@@ -56,11 +56,11 @@ the folder containing databricks.yml:
        git checkout baseline-v1
        databricks bundle validate -t dev
        databricks bundle deploy -t dev
-       databricks bundle run telematics -t dev
+       databricks bundle run telematics_job -t dev
        databricks bundle deploy -t test
-       databricks bundle run telematics -t test
+       databricks bundle run telematics_job -t test
        databricks bundle deploy -t prod
-       databricks bundle run telematics -t prod
+       databricks bundle run telematics_job -t prod
 
 If a command fails, fix the cause and repeat the same deploy/run. Do not create
 or alter any prod objects manually. Each run adds 24 Bronze records and 20
@@ -84,11 +84,11 @@ rows. Capture evidence after each target run:
        git checkout main
        databricks bundle validate -t dev
        databricks bundle deploy -t dev
-       databricks bundle run telematics -t dev
+       databricks bundle run telematics_job -t dev
        databricks bundle deploy -t test
-       databricks bundle run telematics -t test
+       databricks bundle run telematics_job -t test
        databricks bundle deploy -t prod
-       databricks bundle run telematics -t prod
+       databricks bundle run telematics_job -t prod
 
 For a real promotion, inspect the dev and test results before the next deploy.
 No command above writes directly to a prod table; the prod job applies the
